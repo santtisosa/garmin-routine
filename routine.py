@@ -14,12 +14,15 @@ Uso:
 
 import os
 import json
+from pathlib import Path
 from datetime import date, timedelta
 from dotenv import load_dotenv
 import garminconnect
 import anthropic
 
 load_dotenv()
+
+TOKEN_STORE = Path("~/.garmin_tokens").expanduser()
 
 # ─── Conocimiento científico embebido ────────────────────────────────────────
 
@@ -69,12 +72,22 @@ class GarminFetcher:
     def __init__(self):
         email = os.getenv("GARMIN_EMAIL")
         password = os.getenv("GARMIN_PASSWORD")
-        if not email or not password:
-            raise ValueError("Faltan GARMIN_EMAIL y GARMIN_PASSWORD en .env")
 
-        self.client = garminconnect.Garmin(email, password)
-        self.client.login()
-        print("✓ Conectado a Garmin Connect")
+        TOKEN_STORE.mkdir(parents=True, exist_ok=True)
+
+        # login(tokenstore) carga tokens si existen, o hace login fresco y los guarda
+        self.client = garminconnect.Garmin(
+            email or "",
+            password or "",
+            prompt_mfa=lambda: input("Código MFA de Garmin: "),
+        )
+        self.client.login(tokenstore=str(TOKEN_STORE))
+
+        cached = any(TOKEN_STORE.iterdir())
+        if cached:
+            print("✓ Conectado a Garmin Connect (token cacheado)")
+        else:
+            print(f"✓ Conectado a Garmin Connect (token guardado en {TOKEN_STORE})")
 
     def fetch_all(self, weeks: int = 4) -> dict:
         today = date.today()
