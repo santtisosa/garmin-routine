@@ -22,7 +22,8 @@ import anthropic
 
 load_dotenv()
 
-TOKEN_STORE = Path("~/.garmin_tokens").expanduser()
+TOKEN_STORE   = Path("~/.garmin_tokens").expanduser()
+SESSION_FILE  = Path("~/.garmin_session.json").expanduser()
 
 # ─── Conocimiento científico embebido ────────────────────────────────────────
 
@@ -70,23 +71,43 @@ SCIENCE_CONTEXT = """
 
 class GarminFetcher:
     def __init__(self):
-        email = os.getenv("GARMIN_EMAIL")
-        password = os.getenv("GARMIN_PASSWORD")
+        token_file = TOKEN_STORE / "garmin_tokens.json"
 
-        TOKEN_STORE.mkdir(parents=True, exist_ok=True)
-
-        # login(tokenstore) carga tokens si existen, o hace login fresco y los guarda
-        self.client = garminconnect.Garmin(
-            email or "",
-            password or "",
-            prompt_mfa=lambda: input("Código MFA de Garmin: "),
-        )
-        self.client.login(tokenstore=str(TOKEN_STORE))
-
-        cached = any(TOKEN_STORE.iterdir())
-        if cached:
+        if token_file.exists():
+            # Token cacheado de login previo
+            self.client = garminconnect.Garmin()
+            self.client.login(tokenstore=str(TOKEN_STORE))
             print("✓ Conectado a Garmin Connect (token cacheado)")
+
+        elif SESSION_FILE.exists():
+            # Cookies del browser (fallback cuando el IP está rate-limited)
+            session = json.loads(SESSION_FILE.read_text())
+            jwt_web   = session.get("jwt_web", "")
+            csrf      = session.get("csrf_token", "")
+            if not jwt_web:
+                raise ValueError(f"jwt_web vacío en {SESSION_FILE}. Ejecutá get_token.py de nuevo.")
+
+            self.client = garminconnect.Garmin()
+            # Inyectamos la sesión del browser directamente, sin hacer login
+            self.client.client.jwt_web    = jwt_web
+            self.client.client.csrf_token = csrf
+            print("✓ Conectado a Garmin Connect (sesión del browser)")
+
         else:
+            # Primera vez — login con email/password
+            email    = os.getenv("GARMIN_EMAIL")
+            password = os.getenv("GARMIN_PASSWORD")
+            if not email or not password:
+                raise ValueError(
+                    "No hay token ni sesión guardada. "
+                    "Ejecutá get_token.py o completá GARMIN_EMAIL/PASSWORD en .env"
+                )
+            TOKEN_STORE.mkdir(parents=True, exist_ok=True)
+            self.client = garminconnect.Garmin(
+                email, password,
+                prompt_mfa=lambda: input("Código MFA de Garmin: "),
+            )
+            self.client.login(tokenstore=str(TOKEN_STORE))
             print(f"✓ Conectado a Garmin Connect (token guardado en {TOKEN_STORE})")
 
     def fetch_all(self, weeks: int = 4) -> dict:

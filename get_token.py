@@ -1,10 +1,9 @@
 """
-Helper para obtener el token de Garmin desde el browser.
+Helper para autenticarse en Garmin Connect desde el browser.
 
-El IP de este equipo quedó rate-limited por Garmin. Este script te guía
-para extraer el token directamente del browser (donde ya estás logueado)
-y guardarlo en ~/.garmin_tokens/garmin_tokens.json para que routine.py
-lo use sin necesitar login.
+El IP de este equipo está rate-limited por Garmin. Este script usa las
+cookies de sesión del browser (donde ya estás logueado) para acceder
+a la API sin necesitar hacer login automático.
 
 Uso:
     python get_token.py
@@ -13,70 +12,55 @@ Uso:
 import json
 from pathlib import Path
 
-TOKEN_FILE = Path("~/.garmin_tokens/garmin_tokens.json").expanduser()
+SESSION_FILE = Path("~/.garmin_session.json").expanduser()
 
 INSTRUCTIONS = """
 ╔══════════════════════════════════════════════════════════════════╗
-║         OBTENER TOKEN DE GARMIN CONNECT DESDE EL BROWSER        ║
+║       OBTENER SESIÓN DE GARMIN CONNECT DESDE EL BROWSER         ║
 ╚══════════════════════════════════════════════════════════════════╝
 
-Pasos:
+Necesitamos dos valores de la request que ya tenés abierta en DevTools.
 
-  1. Abrí https://connect.garmin.com en tu browser y asegurate de estar logueado.
+─── EN DEVTOOLS → NETWORK ─────────────────────────────────────────
 
-  2. Abrí DevTools:
-       Chrome/Edge: F12  →  pestaña "Application"
-       Firefox:     F12  →  pestaña "Storage"
+  1. Buscá cualquier request a connect.garmin.com
+  2. Click en ella → pestaña "Headers" → "Request Headers"
 
-  3. En el panel izquierdo buscá:
-       Local Storage → https://connect.garmin.com
+  Valor 1 — Buscá el header:  JWT_WEB  (está dentro de la línea "cookie")
+            Copiá solo el valor del JWT, que empieza con "eyJ..."
+            Termina antes del ";" siguiente.
 
-  4. Buscá la clave:  com.garmin.connect.user.di.token
+  Valor 2 — Buscá el header:  connect-csrf-token
+            Es un UUID tipo: e9ba7558-2dea-449c-a47a-3843f5d843ef
 
-  5. Copiá el valor completo (es un string JSON largo con di_token, di_refresh_token, etc.)
+─── ALTERNATIVA: desde la consola del browser ─────────────────────
 
-  ─── Alternativa: desde la consola del browser ─────────────────────
+  Pegá esto en Console para copiar ambos valores de una:
 
-     En DevTools → pestaña Console, pegá esto y presioná Enter:
+  (()=>{
+    const jwt = document.cookie.match(/JWT_WEB=([^;]+)/)?.[1];
+    const csrf = document.querySelector('meta[name="csrf-token"]')?.content
+      || window.__CSRF_TOKEN__;
+    copy(JSON.stringify({jwt_web: jwt}));
+    console.log("JWT_WEB copiado. CSRF token (buscalo en Network):", csrf);
+  })()
 
-     copy(localStorage.getItem('com.garmin.connect.user.di.token'))
-
-     Eso copia el valor al portapapeles directamente.
-
-  ───────────────────────────────────────────────────────────────────
-
-  6. Pegá el contenido abajo cuando se te pida.
-
+───────────────────────────────────────────────────────────────────
 """
 
 print(INSTRUCTIONS)
 
-raw = input("Pegá el contenido del token aquí y presioná Enter:\n> ").strip()
+jwt_web = input("Pegá el valor de JWT_WEB (empieza con 'eyJ...'):\n> ").strip()
+if not jwt_web.startswith("eyJ"):
+    print("⚠ El JWT_WEB debería empezar con 'eyJ'. Revisá que copiaste solo el valor, sin 'JWT_WEB='.")
 
-try:
-    data = json.loads(raw)
-except json.JSONDecodeError:
-    print("\n✗ El contenido no es JSON válido. Intentá de nuevo.")
-    exit(1)
+csrf_token = input("\nPegá el valor de connect-csrf-token (UUID):\n> ").strip()
 
-# El localStorage puede devolver el objeto completo o solo los campos del token
-# Nos aseguramos de que tenga los campos mínimos
-di_token = data.get("di_token") or data.get("accessToken") or data.get("access_token")
-di_refresh = data.get("di_refresh_token") or data.get("refreshToken") or data.get("refresh_token")
-di_client_id = data.get("di_client_id") or data.get("clientId") or data.get("client_id")
-
-if not di_token:
-    print("\n✗ No se encontró 'di_token' en el JSON. Revisá que copiaste el valor correcto.")
-    exit(1)
-
-token_data = {
-    "di_token": di_token,
-    "di_refresh_token": di_refresh,
-    "di_client_id": di_client_id,
+data = {
+    "jwt_web": jwt_web,
+    "csrf_token": csrf_token,
 }
 
-TOKEN_FILE.parent.mkdir(parents=True, exist_ok=True)
-TOKEN_FILE.write_text(json.dumps(token_data, indent=2))
-
-print(f"\n✓ Token guardado en {TOKEN_FILE}")
+SESSION_FILE.write_text(json.dumps(data, indent=2))
+print(f"\n✓ Sesión guardada en {SESSION_FILE}")
 print("  Ahora podés ejecutar: python routine.py")
