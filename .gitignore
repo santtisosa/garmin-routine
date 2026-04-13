@@ -1,0 +1,7 @@
+.env
+garmin_data.json
+rutina_*.md
+__pycache__/
+*.pyc
+.venv/
+venv/
