@@ -13,7 +13,6 @@
 **Garmin Connect + Claude API → rutina semanal personalizada de running y gym**
 
 [![Python](https://img.shields.io/badge/Python-3.9+-3776AB?style=flat&logo=python&logoColor=white)](https://python.org)
-[![Anthropic](https://img.shields.io/badge/Claude-Opus_4.6-D4622A?style=flat&logo=anthropic&logoColor=white)](https://anthropic.com)
 [![Garmin](https://img.shields.io/badge/Garmin-Connect-007CC3?style=flat&logo=garmin&logoColor=white)](https://connect.garmin.com)
 [![License](https://img.shields.io/badge/License-MIT-green?style=flat)](LICENSE)
 
