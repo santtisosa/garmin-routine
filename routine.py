@@ -69,6 +69,7 @@ SCIENCE_CONTEXT = """
 
 # ─── Extractor de datos Garmin ────────────────────────────────────────────────
 
+
 class GarminFetcher:
     def __init__(self):
         token_file = TOKEN_STORE / "garmin_tokens.json"
