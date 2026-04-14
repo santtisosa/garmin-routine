@@ -1,5 +1,5 @@
 """
-Garmin Connect → Rutina personalizada con Claude API
+Garmin Connect → Rutina personalizada con IA
 
 Basado en:
 - Seiler & Kjerland (2006): Polarized training 80/20
@@ -222,7 +222,7 @@ class GarminFetcher:
         return f"{mins}:{secs:02d} min/km"
 
 
-# ─── Generador de rutina con Claude ──────────────────────────────────────────
+# ─── Generador de rutina ─────────────────────────────────────────────────────
 
 class RoutineGenerator:
     def __init__(self):
@@ -234,9 +234,10 @@ class RoutineGenerator:
     def generate(self, garmin_data: dict, user_profile: dict) -> str:
         prompt = self._build_prompt(garmin_data, user_profile)
 
-        print("\n⏳ Generando rutina con Claude...\n")
+        print("\n⏳ Generando rutina...\n")
+        model = os.getenv("AI_MODEL", "claude-opus-4-6")
         message = self.client.messages.create(
-            model="claude-opus-4-6",
+            model=model,
             max_tokens=4096,
             messages=[{"role": "user", "content": prompt}],
         )
@@ -320,7 +321,7 @@ def main():
     }
 
     print("=" * 60)
-    print("  GENERADOR DE RUTINA PERSONALIZADA — Garmin + Claude")
+    print("  GENERADOR DE RUTINA PERSONALIZADA — Garmin")
     print("=" * 60)
 
     # 1. Obtener datos de Garmin

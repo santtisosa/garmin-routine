@@ -10,7 +10,7 @@
                                               R O U T I N E
 ```
 
-**Garmin Connect + Claude API → rutina semanal personalizada de running y gym**
+**Garmin Connect + IA → rutina semanal personalizada de running y gym**
 
 [![Python](https://img.shields.io/badge/Python-3.9+-3776AB?style=flat&logo=python&logoColor=white)](https://python.org)
 [![Garmin](https://img.shields.io/badge/Garmin-Connect-007CC3?style=flat&logo=garmin&logoColor=white)](https://connect.garmin.com)
@@ -22,7 +22,7 @@
 
 ## ¿Qué hace?
 
-Conecta con tu cuenta de **Garmin Connect**, extrae tus métricas de las últimas semanas y usa **Claude** para generar una rutina de 7 días adaptada exactamente a tu estado actual — no una plantilla genérica.
+Conecta con tu cuenta de **Garmin Connect**, extrae tus métricas de las últimas semanas y usa **IA** para generar una rutina de 7 días adaptada exactamente a tu estado actual — no una plantilla genérica.
 
 ```
 Garmin Connect
@@ -31,7 +31,7 @@ Garmin Connect
   └─ Body battery, resting HR, stress score
         │
         ▼
-  Claude Opus 4.6
+  Motor de IA
   └─ Polarized training 80/20 (Seiler & Kjerland, 2006)
   └─ Concurrent training science (Wilson et al., 2012)
   └─ HRV-guided periodization (Buchheit & Plews)
@@ -111,7 +111,7 @@ Ejemplo de output:
 
 ```
 ============================================================
-  GENERADOR DE RUTINA PERSONALIZADA — Garmin + Claude
+  GENERADOR DE RUTINA PERSONALIZADA — Garmin
 ============================================================
 ✓ Conectado a Garmin Connect
 ✓ 24 actividades obtenidas
@@ -119,7 +119,7 @@ Ejemplo de output:
 ✓ Training status obtenido (VO2 max: 52.4)
 ✓ Sueño: 7 noches
 
-⏳ Generando rutina con Claude...
+⏳ Generando rutina...
 
 ## Lunes — Fuerza (Piernas)
 **Objetivo:** Estímulo de fuerza sin comprometer el rodaje del martes...
