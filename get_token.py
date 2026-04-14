@@ -61,6 +61,6 @@ data = {
     "csrf_token": csrf_token,
 }
 
-SESSION_FILE.write_text(json.dumps(data, indent=2))
+SESSION_FILE.write_text(json.dumps(data, indent=2), encoding="utf-8")
 print(f"\n✓ Sesión guardada en {SESSION_FILE}")
 print("  Ahora podés ejecutar: python routine.py")
