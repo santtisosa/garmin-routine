@@ -82,11 +82,13 @@ class GarminFetcher:
 
         elif SESSION_FILE.exists():
             # Cookies del browser (fallback cuando el IP está rate-limited)
-            session = json.loads(SESSION_FILE.read_text())
+            session = json.loads(SESSION_FILE.read_text(encoding="utf-8"))
             jwt_web   = session.get("jwt_web", "")
             csrf      = session.get("csrf_token", "")
             if not jwt_web:
                 raise ValueError(f"jwt_web vacío en {SESSION_FILE}. Ejecutá get_token.py de nuevo.")
+            if not csrf:
+                raise ValueError(f"csrf_token vacío en {SESSION_FILE}. Ejecutá get_token.py de nuevo.")
 
             self.client = garminconnect.Garmin()
             # Inyectamos la sesión del browser directamente, sin hacer login
@@ -185,8 +187,8 @@ class GarminFetcher:
                         "deep_sleep_hours": round((summary.get("deepSleepSeconds") or 0) / 3600, 1),
                         "rem_hours": round((summary.get("remSleepSeconds") or 0) / 3600, 1),
                     })
-                except Exception:
-                    pass
+                except Exception as e:
+                    print(f"⚠ Sueño {d}: {e}")
             data["sleep_last7"] = sleep_data
             print(f"✓ Datos de sueño: {len(sleep_data)} noches")
         except Exception as e:
@@ -214,7 +216,7 @@ class GarminFetcher:
             })
         return parsed
 
-    def _speed_to_pace(self, speed_ms) -> str:
+    def _speed_to_pace(self, speed_ms) -> str | None:
         if not speed_ms or speed_ms == 0:
             return None
         pace_s = 1000 / speed_ms
@@ -330,7 +332,7 @@ def main():
     garmin_data = fetcher.fetch_all(weeks=USER_PROFILE["weeks_back"])
 
     # Guardar raw data para debug
-    with open("garmin_data.json", "w") as f:
+    with open("garmin_data.json", "w", encoding="utf-8") as f:
         json.dump(garmin_data, f, indent=2, ensure_ascii=False, default=str)
     print("✓ Datos guardados en garmin_data.json")
 
@@ -340,7 +342,7 @@ def main():
 
     # 3. Guardar y mostrar resultado
     output_file = f"rutina_{date.today().isoformat()}.md"
-    with open(output_file, "w") as f:
+    with open(output_file, "w", encoding="utf-8") as f:
         f.write(f"# Rutina Personalizada — {date.today().isoformat()}\n\n")
         f.write(routine)
 
